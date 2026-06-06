@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Train Seat Alert</string>
+    <string name="widget_description">Shows the most urgent active train seat alert</string>
+    <string name="channel_monitoring_name">Seat Monitoring</string>
+    <string name="channel_alarm_name">Seat Alerts</string>
+    <string name="notification_dismiss">DISMISS</string>
+    <string name="seats_available">seats available</string>
+    <string name="no_active_alerts">No active alerts</string>
+</resources>
