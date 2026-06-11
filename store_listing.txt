@@ -1,0 +1,32 @@
+SHORT DESCRIPTION (max 80 chars):
+Get a loud alarm the moment train seats open up on your route.
+
+FULL DESCRIPTION:
+Never miss a confirmed train seat again!
+
+Train Seat Alert watches Indian Railways seat availability for you and sounds a
+loud alarm the instant seats become available on your train — even when your phone
+is locked.
+
+HOW IT WORKS
+1. Add your train: train number, boarding & destination stations, journey date,
+   travel class (SL, 3A, 2A, etc.) and quota.
+2. Set a seat threshold and how often to check (every 15 min to 12 hours).
+3. Relax. The app checks automatically in the background.
+4. When seats open up, you get a full-screen alarm with ringtone and vibration.
+
+FEATURES
+• Track unlimited trains at once
+• Automatic background checking (battery-friendly)
+• Loud full-screen alarm that works on the lock screen
+• Snooze and dismiss controls
+• Availability history with a seat-count chart
+• Pause / resume any alert
+• Home-screen widget showing your most urgent alert
+• Dark mode and Material You theming
+• Works automatically after a phone restart
+
+Perfect for booking Tatkal, waitlist clearing, or grabbing last-minute seats.
+
+Note: Seat data is provided via a third-party railway information API and is for
+reference only. Always confirm on the official IRCTC platform before booking.

@@ -20,8 +20,12 @@ val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "se
 class UserPreferences @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
+    // Falls back to the embedded BuildConfig key so the app works without manual setup.
     val rapidApiKeyFlow: Flow<String> = context.dataStore.data
-        .map { prefs -> prefs[KEY_RAPIDAPI] ?: "" }
+        .map { prefs ->
+            prefs[KEY_RAPIDAPI]?.takeIf { it.isNotBlank() }
+                ?: com.trainseat.app.BuildConfig.RAPIDAPI_KEY
+        }
 
     suspend fun setRapidApiKey(key: String) {
         context.dataStore.edit { it[KEY_RAPIDAPI] = key.trim() }

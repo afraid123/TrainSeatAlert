@@ -1,0 +1,96 @@
+name: Build Signed Release (AAB + APK)
+
+on:
+  workflow_dispatch:
+
+# Allow the workflow to commit the generated keystore back to the repo so the
+# same signing key is reused for every future release (required by Play Store).
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  # Upload-key passwords. Under Play App Signing the upload key can be reset if
+  # ever compromised, so committed passwords here are an acceptable trade-off.
+  RELEASE_STORE_PASSWORD: "TrainSeat2026!"
+  RELEASE_KEY_PASSWORD: "TrainSeat2026!"
+  RELEASE_KEY_ALIAS: "trainseat"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK components
+        run: sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools"
+
+      - name: Ensure signing keystore exists (generate once, persist in repo)
+        run: |
+          mkdir -p keystore
+          if [ ! -f keystore/release.jks.base64 ]; then
+            echo "No keystore found - generating a new one (one time only)."
+            keytool -genkeypair -v \
+              -keystore keystore/release.jks \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -alias "$RELEASE_KEY_ALIAS" \
+              -storepass "$RELEASE_STORE_PASSWORD" \
+              -keypass "$RELEASE_KEY_PASSWORD" \
+              -dname "CN=Train Seat Alert, OU=Mobile, O=TrainSeat, L=NA, ST=NA, C=IN"
+            base64 -w0 keystore/release.jks > keystore/release.jks.base64
+            git config user.name "github-actions"
+            git config user.email "actions@github.com"
+            git add keystore/release.jks.base64
+            git commit -m "Add persistent release signing keystore"
+            git push
+          else
+            echo "Existing keystore found - reusing it."
+          fi
+
+      - name: Decode keystore
+        run: base64 -d keystore/release.jks.base64 > "$RUNNER_TEMP/release.jks"
+
+      - name: Download fresh gradlew and wrapper JAR
+        run: |
+          curl -fL -o gradlew "https://raw.githubusercontent.com/gradle/gradle/v8.2.0/gradlew"
+          chmod +x gradlew
+          mkdir -p gradle/wrapper
+          curl -fL -o gradle/wrapper/gradle-wrapper.jar \
+            "https://raw.githubusercontent.com/gradle/gradle/v8.2.0/gradle/wrapper/gradle-wrapper.jar"
+          {
+            echo "distributionBase=GRADLE_USER_HOME"
+            echo "distributionPath=wrapper/dists"
+            echo "distributionUrl=https\://services.gradle.org/distributions/gradle-8.2-bin.zip"
+            echo "zipStoreBase=GRADLE_USER_HOME"
+            echo "zipStorePath=wrapper/dists"
+          } > gradle/wrapper/gradle-wrapper.properties
+
+      - name: Build signed AAB and APK
+        env:
+          RELEASE_STORE_FILE: ${{ runner.temp }}/release.jks
+        run: ./gradlew bundleRelease assembleRelease --no-daemon
+
+      - name: Upload AAB (for Play Store)
+        uses: actions/upload-artifact@v4
+        with:
+          name: TrainSeatAlert-AAB-PlayStore
+          path: "**/bundle/release/*.aab"
+          retention-days: 90
+
+      - name: Upload signed APK (for direct install)
+        uses: actions/upload-artifact@v4
+        with:
+          name: TrainSeatAlert-Release-APK
+          path: "**/apk/release/*.apk"
+          retention-days: 90

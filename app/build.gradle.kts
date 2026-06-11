@@ -13,12 +13,32 @@ android {
         applicationId = "com.trainseat.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
+        }
+
+        // Embedded RapidAPI key (from gradle.properties) so the app works out-of-the-box.
+        buildConfigField(
+            "String",
+            "RAPIDAPI_KEY",
+            "\"${project.findProperty("RAPIDAPI_KEY") ?: ""}\""
+        )
+    }
+
+    signingConfigs {
+        create("release") {
+            // Values supplied by the CI release workflow via env vars.
+            val storePathEnv = System.getenv("RELEASE_STORE_FILE")
+            if (storePathEnv != null) {
+                storeFile = file(storePathEnv)
+                storePassword = System.getenv("RELEASE_STORE_PASSWORD")
+                keyAlias = System.getenv("RELEASE_KEY_ALIAS")
+                keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
+            }
         }
     }
 
@@ -30,6 +50,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // Use the release signing config only when CI provided a keystore.
+            if (System.getenv("RELEASE_STORE_FILE") != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
         debug {
             isMinifyEnabled = false

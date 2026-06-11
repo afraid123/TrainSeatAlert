@@ -42,7 +42,7 @@ fun SettingsScreen(
     val importResult by viewModel.importResult.collectAsStateWithLifecycle()
     val rapidApiKey by viewModel.rapidApiKey.collectAsStateWithLifecycle()
 
-    var apiKeyInput by remember(rapidApiKey) { mutableStateOf(rapidApiKey) }
+    var apiKeyInput by remember { mutableStateOf("") }
     var showThemeDialog by remember { mutableStateOf(false) }
     var showIntervalDialog by remember { mutableStateOf(false) }
     var showExportDialog by remember { mutableStateOf(false) }
@@ -90,19 +90,16 @@ fun SettingsScreen(
             SettingsSectionHeader("Seat Data API (RapidAPI – IRCTC)")
 
             Text(
-                text = if (rapidApiKey.isBlank())
-                    "⚠ No API key set. Seat checks will return 0 until you paste your RapidAPI key below."
-                else
-                    "✓ API key saved. Seat checks are active.",
+                text = "✓ Seat checks are active using the built-in API key. " +
+                        "You can optionally use your own RapidAPI key below (e.g. for a higher quota).",
                 style = MaterialTheme.typography.bodySmall,
-                color = if (rapidApiKey.isBlank()) MaterialTheme.colorScheme.error
-                else MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.primary
             )
 
             OutlinedTextField(
                 value = apiKeyInput,
                 onValueChange = { apiKeyInput = it },
-                label = { Text("RapidAPI Key") },
+                label = { Text("Your RapidAPI Key (optional)") },
                 placeholder = { Text("paste X-RapidAPI-Key here") },
                 singleLine = true,
                 modifier = Modifier
@@ -111,13 +108,16 @@ fun SettingsScreen(
             )
 
             Button(
-                onClick = { viewModel.setRapidApiKey(apiKeyInput) },
-                enabled = apiKeyInput.isNotBlank() && apiKeyInput != rapidApiKey,
+                onClick = {
+                    viewModel.setRapidApiKey(apiKeyInput)
+                    apiKeyInput = ""
+                },
+                enabled = apiKeyInput.isNotBlank(),
                 modifier = Modifier
                     .fillMaxWidth()
                     .semantics { contentDescription = "Save API key" }
             ) {
-                Text("Save API Key")
+                Text("Use My Own Key")
             }
 
             HorizontalDivider()
