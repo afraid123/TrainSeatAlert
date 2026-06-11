@@ -45,4 +45,63 @@ object SeatAvailabilityParser {
     fun shouldTriggerAlarm(availability: SeatAvailability, threshold: Int): Boolean {
         return availability.status == AvailabilityStatus.AVAILABLE && availability.count < threshold
     }
+
+    /**
+     * Parses the RapidAPI "irctc1" checkSeatAvailability JSON response.
+     * Response shape:
+     * {
+     *   "status": true,
+     *   "data": [
+     *     { "date": "dd-mm-yyyy", "current_status": "AVAILABLE-0024", ... },
+     *     ...
+     *   ]
+     * }
+     * current_status examples: "AVAILABLE-0024", "RAC 12", "GNWL/123", "REGRET", "NOT AVAILABLE"
+     */
+    fun parseIrctc1(json: String, targetDate: String): SeatAvailability {
+        return try {
+            val root = com.google.gson.JsonParser.parseString(json).asJsonObject
+            val data = root.getAsJsonArray("data")
+                ?: return SeatAvailability(AvailabilityStatus.UNKNOWN, 0, "NO_DATA")
+            if (data.size() == 0) {
+                return SeatAvailability(AvailabilityStatus.UNKNOWN, 0, "NO_DATA")
+            }
+
+            var chosen = data[0].asJsonObject
+            for (el in data) {
+                val obj = el.asJsonObject
+                val d = obj.get("date")?.takeIf { !it.isJsonNull }?.asString ?: ""
+                if (d == targetDate) {
+                    chosen = obj
+                    break
+                }
+            }
+
+            val status = chosen.get("current_status")?.takeIf { !it.isJsonNull }?.asString
+                ?: chosen.get("confirmTktStatus")?.takeIf { !it.isJsonNull }?.asString
+                ?: "UNKNOWN"
+
+            classifyIrctcStatus(status)
+        } catch (e: Exception) {
+            SeatAvailability(AvailabilityStatus.UNKNOWN, 0, "PARSE_ERROR")
+        }
+    }
+
+    private fun classifyIrctcStatus(raw: String): SeatAvailability {
+        val s = raw.uppercase().trim()
+        val num = Regex("""(\d+)""").find(s)?.value?.toIntOrNull() ?: 0
+        return when {
+            s.contains("AVAILABLE") || s.startsWith("AVL") ->
+                SeatAvailability(AvailabilityStatus.AVAILABLE, num, raw)
+            s.contains("RAC") ->
+                SeatAvailability(AvailabilityStatus.WAITLIST, -num, raw)
+            s.contains("WL") ->
+                SeatAvailability(AvailabilityStatus.WAITLIST, -num, raw)
+            s.contains("REGRET") || s.contains("NOT AVAILABLE") ||
+                    s.contains("DEPARTED") || s.contains("CHARTING") ->
+                SeatAvailability(AvailabilityStatus.REGRET, 0, raw)
+            else ->
+                SeatAvailability(AvailabilityStatus.UNKNOWN, 0, raw)
+        }
+    }
 }

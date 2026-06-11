@@ -40,7 +40,9 @@ fun SettingsScreen(
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val exportResult by viewModel.exportResult.collectAsStateWithLifecycle()
     val importResult by viewModel.importResult.collectAsStateWithLifecycle()
+    val rapidApiKey by viewModel.rapidApiKey.collectAsStateWithLifecycle()
 
+    var apiKeyInput by remember(rapidApiKey) { mutableStateOf(rapidApiKey) }
     var showThemeDialog by remember { mutableStateOf(false) }
     var showIntervalDialog by remember { mutableStateOf(false) }
     var showExportDialog by remember { mutableStateOf(false) }
@@ -85,6 +87,40 @@ fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            SettingsSectionHeader("Seat Data API (RapidAPI – IRCTC)")
+
+            Text(
+                text = if (rapidApiKey.isBlank())
+                    "⚠ No API key set. Seat checks will return 0 until you paste your RapidAPI key below."
+                else
+                    "✓ API key saved. Seat checks are active.",
+                style = MaterialTheme.typography.bodySmall,
+                color = if (rapidApiKey.isBlank()) MaterialTheme.colorScheme.error
+                else MaterialTheme.colorScheme.primary
+            )
+
+            OutlinedTextField(
+                value = apiKeyInput,
+                onValueChange = { apiKeyInput = it },
+                label = { Text("RapidAPI Key") },
+                placeholder = { Text("paste X-RapidAPI-Key here") },
+                singleLine = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics { contentDescription = "RapidAPI key input field" }
+            )
+
+            Button(
+                onClick = { viewModel.setRapidApiKey(apiKeyInput) },
+                enabled = apiKeyInput.isNotBlank() && apiKeyInput != rapidApiKey,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics { contentDescription = "Save API key" }
+            ) {
+                Text("Save API Key")
+            }
+
+            HorizontalDivider()
             SettingsSectionHeader("Monitoring")
 
             SettingsClickItem(

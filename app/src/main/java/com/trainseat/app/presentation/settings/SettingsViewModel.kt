@@ -1,11 +1,11 @@
 package com.trainseat.app.presentation.settings
 
 import android.content.Context
-import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
-import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.trainseat.app.data.prefs.UserPreferences
+import com.trainseat.app.data.prefs.dataStore
 import com.trainseat.app.data.repository.AlertRepository
 import com.trainseat.app.presentation.theme.ThemeMode
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,12 +14,11 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
-
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val repository: AlertRepository
+    private val repository: AlertRepository,
+    private val userPreferences: UserPreferences
 ) : ViewModel() {
 
     private val _exportResult = MutableStateFlow<String?>(null)
@@ -27,6 +26,13 @@ class SettingsViewModel @Inject constructor(
 
     private val _importResult = MutableStateFlow<Int?>(null)
     val importResult: StateFlow<Int?> = _importResult
+
+    val rapidApiKey: StateFlow<String> = userPreferences.rapidApiKeyFlow
+        .stateIn(viewModelScope, SharingStarted.Lazily, "")
+
+    fun setRapidApiKey(key: String) {
+        viewModelScope.launch { userPreferences.setRapidApiKey(key) }
+    }
 
     val defaultIntervalMinutes: StateFlow<Int> = context.dataStore.data
         .map { prefs -> prefs[KEY_DEFAULT_INTERVAL] ?: 30 }
