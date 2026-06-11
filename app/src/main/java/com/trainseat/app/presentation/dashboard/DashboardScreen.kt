@@ -99,7 +99,7 @@ fun DashboardScreen(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
-                        Icons.Default.TrainOutlined,
+                        Icons.Default.Train,
                         contentDescription = null,
                         modifier = Modifier.size(72.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
@@ -131,8 +131,7 @@ fun DashboardScreen(
                         AlertCard(
                             alert = alert,
                             onClick = { onViewDetail(alert.id) },
-                            onLongClick = { contextMenuAlert = alert },
-                            modifier = Modifier.animateItem()
+                            onLongClick = { contextMenuAlert = alert }
                         )
                     }
                 }
@@ -333,5 +332,3 @@ private fun AlertContextMenu(
         )
     }
 }
-
-private val Icons.Default.TrainOutlined get() = Icons.Default.Train

@@ -1,0 +1,5 @@
+.claude/
+*.jks
+local.properties
+.gradle/
+build/
