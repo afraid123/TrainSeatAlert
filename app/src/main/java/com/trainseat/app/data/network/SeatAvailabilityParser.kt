@@ -60,7 +60,9 @@ object SeatAvailabilityParser {
      */
     fun parseIrctc1(json: String, targetDate: String): SeatAvailability {
         return try {
-            val root = com.google.gson.JsonParser.parseString(json).asJsonObject
+            val root = com.google.gson.Gson()
+                .fromJson(json, com.google.gson.JsonObject::class.java)
+                ?: return SeatAvailability(AvailabilityStatus.UNKNOWN, 0, "NO_DATA")
             val data = root.getAsJsonArray("data")
                 ?: return SeatAvailability(AvailabilityStatus.UNKNOWN, 0, "NO_DATA")
             if (data.size() == 0) {
